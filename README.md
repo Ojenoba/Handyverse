@@ -16,7 +16,6 @@ It features user and artisan registration, authentication, profile management, a
 ## Tech Stack
 
 - **Backend:** Flask (Python), Flask-Login, Flask-CORS, SQLAlchemy
-- **Frontend:** React + Vite (recommended for SPA)
 - **Database:** SQLite (default), easily switchable to PostgreSQL/MySQL
 - **Authentication:** JWT or Flask-Login sessions
 
@@ -34,16 +33,6 @@ It features user and artisan registration, authentication, profile management, a
     flask run
     ```
 
-### Frontend (React + Vite)
-
-1. Install dependencies:
-    ```sh
-    npm install
-    ```
-2. Start the frontend:
-    ```sh
-    npm run dev
-    ```
 
 ## API Endpoints
 
