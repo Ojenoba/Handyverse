@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Your Chats</h1>
+{% if chat_histories %}
+    {% for other_id, msgs in chat_histories.items() %}
+        <div class="chat-section">
+            <h3>Chat with {{ participants[other_id].name }}</h3>
+            <ul class="message-list">
+            {% for message in msgs %}
+                <li class="message-item {{ 'sent' if message.sender_id == current_user.id else 'received' }}">
+                    <div class="message-bubble">
+                        <span class="message-author">{{ 'You' if message.sender_id == current_user.id else participants[other_id].name }}</span>:
+                        {{ message.content }}
+                    </div>
+                    <p class="message-timestamp"><small>{{ message.timestamp.strftime('%B %d, %Y, %I:%M %p') }}</small></p>
+                </li>
+            {% endfor %}
+            </ul>
+            <form method="POST" action="{{ url_for('main.send_message', recipient_id=other_id) }}" class="reply-form">
+                {{ form.csrf_token }}
+                <textarea name="content" rows="2" cols="40" placeholder="Type your message..." required></textarea>
+                <button type="submit" class="cta-button">Send</button>
+            </form>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>You have no chat history yet.</p>
+{% endif %}
+{% endblock %}
+
+{% block styles %}
+<style>
+.chat-section {
+    border-radius: 10px;
+    padding: 1em;
+    background: #f7fafd;
+    max-width: 500px;
+    margin: 0 auto 2em auto;
+    box-shadow: 0 2px 8px rgba(33,147,176,0.08);
+}
+.message-list {
+    list-style-type: none;
+    padding: 0;
+    max-height: 350px;
+    overflow-y: auto;
+    margin-bottom: 1em;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(33,147,176,0.05);
+}
+.reply-form {
+    margin-top: 0.5em;
+    display: flex;
+    gap: 8px;
+}
+.reply-form textarea {
+    flex: 1;
+    border-radius: 12px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    resize: none;
+}
+.cta-button {
+    background-color: #2193b0;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border-radius: 12px;
+}
+.cta-button:hover {
+    background-color: #6dd5ed;
+}
+@media (max-width: 600px) {
+    .chat-section {
+        max-width: 100%;
+        padding: 0.5em;
+    }
+}
+</style>
+{% endblock %}

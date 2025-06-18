@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Handyverse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('main.index') if not current_user.is_authenticated else (url_for('main.user_dashboard') if not current_user.is_artisan else url_for('main.artisan_dashboard')) }}" class="brand" aria-label="Home">Handyverse</a>
+        <div class="nav-links">
+            {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('main.login_page') }}" class="btn" aria-label="Login">Login</a>
+                <a href="{{ url_for('main.signup') }}" class="btn" aria-label="Sign Up">Sign Up</a>
+            {% else %}
+                <a href="{{ url_for('main.logout') }}" class="btn" aria-label="Logout">Logout</a>
+            {% endif %}
+        </div>
+    </header>
+    <main>
+        <section class="hero-section">
+            <img src="{{ url_for('static', filename='images/handyverse-hero.png') }}" alt="Handyverse Hero" class="hero-img">
+        </section>
+        <section class="about-section">
+            <h2>About Us</h2>
+            <p>Welcome to Handyverse, your go-to platform for skilled artisans!</p>
+        </section>
+        <section class="search-section">
+            <h2>Search Artisans</h2>
+            <div class="search-center">
+                <input type="text" id="locationInput" placeholder="Enter location" aria-label="Search location">
+                <button id="searchButton" class="search-button" aria-label="Search">Search</button>
+            </div>
+            <div id="artisansGrid"></div>
+        </section>
+        <section class="reviews-section">
+            <h2>Reviews</h2>
+            <div id="reviewsGrid">
+                {% for review in reviews %}
+                    <div class="review-card">
+                        <div class="review-header">
+                            <span class="review-author">{{ review.author }}</span>
+                            <span class="review-date">{{ review.date }}</span>
+                        </div>
+                        <div class="review-body">
+                            <p class="review-text">{{ review.text }}</p>
+                            <span class="stars">
+                                {% for i in range(review.rating) %}
+                                    <i class="fa-solid fa-star" style="color:gold"></i>
+                                {% endfor %}
+                            </span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>© 2025 Handyverse. All rights reserved.</p>
+    </footer>
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+</html>

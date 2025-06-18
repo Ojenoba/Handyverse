@@ -1,0 +1,343 @@
+/* Modern font and background */
+body {
+    font-family: 'Roboto', Arial, sans-serif;
+    background: #f7f9fb;
+    color: #222;
+    margin: 0;
+    line-height: 1.6;
+    opacity: 0;
+    transition: opacity 0.7s;
+}
+body.loaded {
+    opacity: 1;
+}
+
+/* Header and footer */
+header, footer {
+    background: #007bff;
+    color: #fff;
+    padding: 1rem 0;
+    text-align: center;
+    letter-spacing: 1px;
+}
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #007bff;
+}
+.brand {
+    font-size: 24px;
+    font-weight: bold;
+    color: #fff;
+    text-decoration: none;
+}
+.nav-links {
+    display: flex;
+    align-items: center;
+}
+
+/* Main content */
+main {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 1rem;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+}
+
+/* Section styling */
+section {
+    margin-bottom: 20px;
+}
+.about-section, .reviews-section, .signup-section, .login-section, .contact-section, .dashboard-section {
+    padding: 20px;
+    text-align: center;
+}
+
+/* Buttons */
+button, .cta-button, .search-button, .contact-button, .auth-option, .btn {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.3s, color 0.3s, transform 0.2s;
+    margin-top: 0.5em;
+    display: inline-block;
+}
+button:hover, .cta-button:hover, .search-button:hover, .contact-button:hover, .auth-option:hover, .btn:hover {
+    background: #0056b3;
+    color: #fff;
+    transform: scale(1.05);
+}
+button:focus, .cta-button:focus, .search-button:focus, .contact-button:focus, .auth-option:focus, .btn:focus {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+/* Artisan profile cards */
+.artisan-profile, .artisan-card {
+    background: #f4f8ff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 1em;
+    margin: 1em 0;
+    transition: box-shadow 0.3s, transform 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 1em;
+    animation: fadeIn 0.7s ease;
+    max-width: 100%;
+}
+.artisan-profile:hover, .artisan-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    transform: translateY(-5px) scale(1.03);
+}
+.profile-pic {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #007bff;
+    margin-bottom: 10px;
+}
+
+/* Cards */
+.review-card, .message-card {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 5px;
+    text-align: left;
+    background: #f9f9f9;
+    animation: fadeIn 0.7s ease;
+    max-width: 100%;
+}
+
+/* Message and reply cards */
+.message-item, .reply-item {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    background: #f9f9f9;
+    animation: fadeIn 0.7s ease;
+}
+.reply-item {
+    margin-left: 20px;
+    background-color: #eaf1fb;
+}
+
+/* Reply form animation */
+.reply-form {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.4s, opacity 0.4s;
+}
+.reply-form.open {
+    max-height: 200px;
+    opacity: 1;
+}
+
+/* Flash messages */
+.flash-messages {
+    list-style-type: none;
+    padding: 0;
+}
+.flash-success {
+    color: green;
+}
+.flash-error {
+    color: red;
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 1rem;
+    text-align: left;
+    width: 100%;
+}
+.error {
+    color: red;
+    font-size: 0.9em;
+    display: block;
+    margin-top: 5px;
+}
+.success {
+    color: green;
+    font-size: 1em;
+    display: block;
+    margin-top: 5px;
+}
+textarea, .form-control {
+    width: 100%;
+    max-width: 500px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    resize: vertical;
+    box-sizing: border-box;
+    font-size: 1em;
+    margin-bottom: 10px;
+}
+
+/* Loading spinner */
+.loading {
+    color: #666;
+    font-style: italic;
+    margin-top: 0.5rem;
+    display: inline-block;
+}
+.loading::after {
+    content: ' ⏳';
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px);}
+    to { opacity: 1; transform: translateY(0);}
+}
+
+/* Search center */
+.search-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0;
+}
+
+/* Optional: Center the entire search-section vertically on the page */
+.search-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Hero section */
+.hero-section {
+    text-align: center;
+    margin-bottom: 2em;
+}
+.hero-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+}
+
+/* Chat section */
+.chat-section {
+    border-radius: 10px;
+    padding: 1em;
+    background: #f7fafd;
+    max-width: 500px;
+    margin: 0 auto 2em auto;
+    box-shadow: 0 2px 8px rgba(33,147,176,0.08);
+}
+.message-list {
+    list-style-type: none;
+    padding: 0;
+    max-height: 350px;
+    overflow-y: auto;
+    margin-bottom: 1em;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(33,147,176,0.05);
+}
+.reply-form {
+    margin-top: 0.5em;
+    display: flex;
+    gap: 8px;
+}
+.reply-form textarea {
+    flex: 1;
+    border-radius: 12px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    resize: none;
+}
+.cta-button {
+    background-color: #2193b0;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border-radius: 12px;
+}
+.cta-button:hover {
+    background-color: #6dd5ed;
+}
+
+/* New message section */
+.new-message-section {
+    background: #e0eafc;
+    border-radius: 10px;
+    padding: 1em;
+    margin-bottom: 2em;
+}
+
+/* Responsiveness */
+@media (max-width: 900px) {
+    main {
+        max-width: 98vw;
+        padding: 0.5rem;
+    }
+}
+@media (max-width: 600px) {
+    header, footer {
+        padding: 0.5rem 0;
+        font-size: 0.95em;
+    }
+    header h1, .brand {
+        font-size: 1.2rem;
+    }
+    .modal-content {
+        width: 90%;
+        max-width: 300px;
+    }
+    .artisan-profile, .artisan-card, .review-card, .message-card {
+        width: 100%;
+        margin: 10px 0;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px;
+    }
+    .profile-pic {
+        width: 50px;
+        height: 50px;
+    }
+    textarea, .form-control {
+        width: 100%;
+        max-width: 100%;
+    }
+    .form-group {
+        width: 100%;
+    }
+    .btn, button, .search-button, .contact-button, .auth-option {
+        width: 100%;
+        margin: 5px 0;
+        font-size: 1em;
+        padding: 10px 0;
+    }
+    main {
+        padding: 0.5rem;
+    }
+    .chat-section {
+        max-width: 100%;
+        padding: 0.5em;
+    }
+}

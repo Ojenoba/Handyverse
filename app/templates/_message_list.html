@@ -1,0 +1,11 @@
+<ul class="message-list">
+{% for message in chat_history %}
+    <li class="message-item {{ 'sent' if message.sender_id == current_user.id else 'received' }}">
+        <div class="message-bubble">
+            <span class="message-author">{{ 'You' if message.sender_id == current_user.id else partner.name }}</span>:
+            {{ message.content }}
+        </div>
+        <p class="message-timestamp"><small>{{ message.timestamp.strftime('%B %d, %Y, %I:%M %p') }}</small></p>
+    </li>
+{% endfor %}
+</ul>

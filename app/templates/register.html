@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Handyverse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Handyverse</h1>
+        <p>Join our community of users and artisans</p>
+    </header>
+    <main>
+        <section class="signup-section">
+            <h2>Sign Up for Handyverse</h2>
+            <p>Choose your account type to get started:</p>
+            <div class="signup-options">
+                <button class="auth-option" onclick="window.location.href='/signup_user'">Register as User</button>
+                <button class="auth-option" onclick="window.location.href='/signup_artisan'">Register as Artisan</button>
+            </div>
+            <p>Already have an account? <a href="/login">Login</a></p>
+        </section>
+    </main>
+    <footer>
+        <p>© 2025 Handyverse. All rights reserved.</p>
+    </footer>
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+</html>

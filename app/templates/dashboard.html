@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Handyverse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Handyverse - {{ 'User' if user.user_type == 'Customer' else 'Artisan' }} Dashboard</h1>
+        <a href="{{ url_for('main.logout') }}" class="cta-button">Logout</a>
+    </header>
+    <main>
+        <section>
+            <h2>Welcome, {{ user.name }}!</h2>
+            <p>Email: {{ user.email }}</p>
+            <p>Location: {{ user.artisan.location if user.user_type == 'Artisan' and user.artisan else 'Not set' }}</p>
+            {% if user.user_type == 'Artisan' and user.artisan %}
+                <p>Trade: {{ user.artisan.skills }}</p>
+            {% endif %}
+            <p>This is your dashboard. Here you can:</p>
+            <ul>
+                {% if user.user_type == 'Customer' %}
+                    <li>Search for artisans</li>
+                    <li>View past bookings</li>
+                {% else %}
+                    <li>Manage your services</li>
+                    <li>View client requests</li>
+                {% endif %}
+                <li>Update your profile</li>
+            </ul>
+            {% if user.user_type == 'Customer' %}
+                <button onclick="locationSearch()">Find Artisans</button>
+            {% endif %}
+        </section>
+    </main>
+    <footer>
+        <p>© 2025 Handyverse. All rights reserved.</p>
+    </footer>
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+</html>

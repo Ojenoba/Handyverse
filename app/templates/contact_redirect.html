@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Artisan - Handyverse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Handyverse</h1>
+        <p>Contact an Artisan</p>
+    </header>
+    <main>
+        <section>
+            <h2>Please Log In or Sign Up</h2>
+            <p>You need to be logged in to contact an artisan. Please choose an option below:</p>
+            <div class="auth-options">
+                <button class="auth-option" onclick="window.location.href='/login'">Login</button>
+                <button class="auth-option" onclick="window.location.href='/signup'">Sign Up</button>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>© 2025 Handyverse. All rights reserved.</p>
+    </footer>
+</body>
+</html>

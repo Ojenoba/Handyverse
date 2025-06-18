@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - User - Handyverse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    {% block head %}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    {% endblock %}
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('main.index') }}" class="brand">Handyverse - User Sign Up</a>
+    </header>
+    <main>
+        <section class="signup-section">
+            <h2>Sign Up as User</h2>
+            <div id="signup-error-message"></div>
+            <form id="userSignupForm" onsubmit="return validateUserSignup(event)">
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" name="name" required>
+                    <span id="name-error" class="error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                    <span id="email-error" class="error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                    <span id="password-error" class="error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="phone_number">Phone Number:</label>
+                    <input type="tel" id="phone_number" name="phone_number" required>
+                    <span id="phone-error" class="error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="location">Location:</label>
+                    <input type="text" id="location" name="location" required>
+                    <span id="location-error" class="error"></span>
+                </div>
+                <button type="submit" class="cta-button">Sign Up</button>
+            </form>
+            <p>Already have an account? <a href="/login">Login</a></p>
+        </section>
+    </main>
+    <footer>
+        <p>© 2025 Handyverse. All rights reserved.</p>
+    </footer>
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+</html>

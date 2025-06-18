@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Your Chats</h1>
+
+<!-- New Message Form -->
+<div class="new-message-section">
+    <h3>Start a New Conversation</h3>
+    <form method="POST" action="{{ url_for('main.send_message', recipient_id=0) }}" id="newMessageForm" class="reply-form">
+        {{ form.csrf_token }}
+        <select name="recipient_id" required>
+            <option value="" disabled selected>Select a user</option>
+            {% for user in all_users %}
+                {% if user.id != current_user.id %}
+                <option value="{{ user.id }}">{{ user.name }} ({{ user.email }})</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+        <textarea name="content" rows="2" cols="40" placeholder="Type your message..." required></textarea>
+        <button type="submit" class="cta-button">Send</button>
+    </form>
+</div>
+
+<div class="chat-partner-list">
+    <h3>Conversations</h3>
+    <ul>
+        {% for user in chat_partners %}
+            <li>
+                <a href="{{ url_for('main.messages', partner_id=user.id) }}" class="chat-partner-link">
+                    {{ user.name }} ({{ user.email }})
+                </a>
+            </li>
+        {% else %}
+            <li>No conversations yet.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% if partner %}
+    <div class="chat-section">
+        <h3>Chat with {{ partner.name }}</h3>
+        <div id="chat-messages">
+            <ul class="message-list">
+            {% for message in chat_history %}
+                <li class="message-item {{ 'sent' if message.sender_id == current_user.id else 'received' }}">
+                    <div class="message-bubble">
+                        <span class="message-author">{{ 'You' if message.sender_id == current_user.id else partner.name }}</span>:
+                        {{ message.content }}
+                    </div>
+                    <p class="message-timestamp"><small>{{ message.timestamp.strftime('%B %d, %Y, %I:%M %p') }}</small></p>
+                </li>
+            {% endfor %}
+            </ul>
+        </div>
+        <form method="POST" action="{{ url_for('main.send_message', recipient_id=partner.id) }}" class="reply-form" id="replyForm">
+            {{ form.csrf_token }}
+            <textarea name="content" rows="2" cols="40" placeholder="Type your message..." required></textarea>
+            <button type="submit" class="cta-button">Send</button>
+        </form>
+    </div>
+{% else %}
+    <p>Select a conversation to view messages.</p>
+{% endif %}
+{% endblock %}
+
+{% block styles %}
+<style>
+.new-message-section {
+    background: #e0eafc;
+    border-radius: 10px;
+    padding: 1em;
+    margin-bottom: 2em;
+}
+.chat-section {
+    border-radius: 10px;
+    padding: 1em;
+    background: #f7fafd;
+    max-width: 500px;
+    margin: 0 auto 2em auto;
+    box-shadow: 0 2px 8px rgba(33,147,176,0.08);
+}
+.message-list {
+    list-style-type: none;
+    padding: 0;
+    max-height: 350px;
+    overflow-y: auto;
+    margin-bottom: 1em;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(33,147,176,0.05);
+}
+.reply-form {
+    margin-top: 0.5em;
+    display: flex;
+    gap: 8px;
+}
+.reply-form textarea {
+    flex: 1;
+    border-radius: 12px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    resize: none;
+}
+.cta-button {
+    background-color: #2193b0;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border-radius: 12px;
+}
+.cta-button:hover {
+    background-color: #6dd5ed;
+}
+@media (max-width: 600px) {
+    .chat-section {
+        max-width: 100%;
+        padding: 0.5em;
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // AJAX for new message form
+    const newMessageForm = document.getElementById('newMessageForm');
+    if (newMessageForm) {
+        newMessageForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const recipientId = newMessageForm.querySelector('select[name="recipient_id"]').value;
+            const content = newMessageForm.querySelector('textarea[name="content"]').value.trim();
+            if (!recipientId || !content) return;
+            fetch('{{ url_for("main.send_message", recipient_id=0) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams({
+                    'recipient_id': recipientId,
+                    'content': content,
+                    'csrf_token': newMessageForm.querySelector('[name="csrf_token"]').value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location = "{{ url_for('main.messages') }}?partner_id=" + recipientId;
+                } else {
+                    alert(data.message || 'Failed to send message.');
+                }
+            });
+        });
+    }
+
+    // AJAX for reply/send in chat
+    const replyForm = document.getElementById('replyForm');
+    if (replyForm) {
+        replyForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const textarea = replyForm.querySelector('textarea[name="content"]');
+            const content = textarea.value.trim();
+            if (!content) return;
+
+            fetch(replyForm.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams({
+                    'content': content,
+                    'csrf_token': replyForm.querySelector('[name="csrf_token"]').value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    textarea.value = '';
+                    loadMessages();
+                } else {
+                    alert(data.message || 'Failed to send message.');
+                }
+            });
+        });
+
+        setInterval(loadMessages, 3000);
+
+        function loadMessages() {
+            const chatSection = document.querySelector('.chat-section');
+            if (!chatSection) return;
+            let url = window.location.pathname + window.location.search;
+            url += (url.indexOf('?') === -1 ? '?' : '&') + 'ajax=1';
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    const temp = document.createElement('div');
+                    temp.innerHTML = html;
+                    const newList = temp.querySelector('.message-list');
+                    const oldList = chatSection.querySelector('.message-list');
+                    if (newList && oldList) {
+                        oldList.innerHTML = newList.innerHTML;
+                    }
+                });
+        }
+    }
+});
+</script>
+{% endblock %}
