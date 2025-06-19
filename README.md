@@ -106,11 +106,6 @@ Handyverse is a modern, interactive web platform that connects users with skille
 
 ---
 
-## Screenshots
-
-> _Add screenshots of the dashboard, job board, messaging, and profile pages here for visual reference._
-
----
 
 ## Customization
 
