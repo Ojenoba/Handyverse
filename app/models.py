@@ -15,6 +15,10 @@ class User(db.Model, UserMixin):  # Inherit from UserMixin
     profile_pic = db.Column(db.String(200))
     messages = db.relationship('Message', foreign_keys='Message.sender_id', backref='sender', lazy='dynamic')
     received_messages = db.relationship('Message', foreign_keys='Message.recipient_id', backref='recipient', lazy='dynamic')
+    job_posts = db.relationship('JobPost', back_populates='user', lazy='dynamic')
+    favorites = db.relationship('Favorite', back_populates='user', lazy='dynamic')
+    reviews_given = db.relationship('Review', back_populates='customer', lazy='dynamic')
+    notifications = db.relationship('Notification', back_populates='user', lazy='dynamic')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -31,7 +35,12 @@ class Artisan(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True)
     skills = db.Column(db.String(100), nullable=False)
     location = db.Column(db.String(100), nullable=False)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
     user = db.relationship('User', backref=db.backref('artisan', uselist=False))
+    favorited_by = db.relationship('Favorite', back_populates='artisan', lazy='dynamic')
+    reviews_received = db.relationship('Review', back_populates='artisan', lazy='dynamic')
+    job_applications = db.relationship('JobApplication', back_populates='artisan', lazy='dynamic')
 
 class Message(db.Model):
     __tablename__ = 'message'
@@ -63,5 +72,49 @@ class Review(db.Model):
     comment = db.Column(db.Text, nullable=False)
     rating = db.Column(db.Integer, nullable=False)  # e.g., 1-5
     timestamp = db.Column(db.DateTime, server_default=db.func.now())
-    customer = db.relationship('User', backref=db.backref('reviews_given', lazy='dynamic'))
-    artisan = db.relationship('Artisan', backref=db.backref('reviews_received', lazy='dynamic'))
+    customer = db.relationship('User', back_populates='reviews_given')
+    artisan = db.relationship('Artisan', back_populates='reviews_received')
+
+class Notification(db.Model):
+    __tablename__ = 'notification'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    type = db.Column(db.String(50), nullable=False)  # e.g., 'message', 'review', 'booking'
+    message = db.Column(db.String(255), nullable=False)
+    url = db.Column(db.String(255))  # Optional: link to relevant page
+    is_read = db.Column(db.Boolean, default=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User', back_populates='notifications')
+
+class Favorite(db.Model):
+    __tablename__ = 'favorite'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    artisan_id = db.Column(db.Integer, db.ForeignKey('artisan.id'), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User', back_populates='favorites')
+    artisan = db.relationship('Artisan', back_populates='favorited_by')
+
+class JobPost(db.Model):
+    __tablename__ = 'job_post'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    location = db.Column(db.String(100))
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
+    budget = db.Column(db.Float)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User', back_populates='job_posts')
+    applications = db.relationship('JobApplication', backref='job_post', lazy='dynamic')
+
+class JobApplication(db.Model):
+    __tablename__ = 'job_application'
+    id = db.Column(db.Integer, primary_key=True)
+    job_post_id = db.Column(db.Integer, db.ForeignKey('job_post.id'), nullable=False)
+    artisan_id = db.Column(db.Integer, db.ForeignKey('artisan.id'), nullable=False)
+    message = db.Column(db.Text)
+    status = db.Column(db.String(50), default='pending')  # pending, accepted, rejected
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    artisan = db.relationship('Artisan', back_populates='job_applications')

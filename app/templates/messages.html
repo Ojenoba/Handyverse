@@ -3,24 +3,6 @@
 {% block content %}
 <h1>Your Chats</h1>
 
-<!-- New Message Form -->
-<div class="new-message-section">
-    <h3>Start a New Conversation</h3>
-    <form method="POST" action="{{ url_for('main.send_message', recipient_id=0) }}" id="newMessageForm" class="reply-form">
-        {{ form.csrf_token }}
-        <select name="recipient_id" required>
-            <option value="" disabled selected>Select a user</option>
-            {% for user in all_users %}
-                {% if user.id != current_user.id %}
-                <option value="{{ user.id }}">{{ user.name }} ({{ user.email }})</option>
-                {% endif %}
-            {% endfor %}
-        </select>
-        <textarea name="content" rows="2" cols="40" placeholder="Type your message..." required></textarea>
-        <button type="submit" class="cta-button">Send</button>
-    </form>
-</div>
-
 <div class="chat-partner-list">
     <h3>Conversations</h3>
     <ul>
@@ -37,27 +19,31 @@
 </div>
 
 {% if partner %}
-    <div class="chat-section">
+<div class="chat-container">
+    <div class="chat-header">
         <h3>Chat with {{ partner.name }}</h3>
-        <div id="chat-messages">
-            <ul class="message-list">
-            {% for message in chat_history %}
-                <li class="message-item {{ 'sent' if message.sender_id == current_user.id else 'received' }}">
-                    <div class="message-bubble">
-                        <span class="message-author">{{ 'You' if message.sender_id == current_user.id else partner.name }}</span>:
-                        {{ message.content }}
-                    </div>
-                    <p class="message-timestamp"><small>{{ message.timestamp.strftime('%B %d, %Y, %I:%M %p') }}</small></p>
-                </li>
-            {% endfor %}
-            </ul>
-        </div>
-        <form method="POST" action="{{ url_for('main.send_message', recipient_id=partner.id) }}" class="reply-form" id="replyForm">
-            {{ form.csrf_token }}
-            <textarea name="content" rows="2" cols="40" placeholder="Type your message..." required></textarea>
-            <button type="submit" class="cta-button">Send</button>
-        </form>
     </div>
+    <div class="chat-history" id="chat-messages">
+        <ul class="message-list">
+        {% for message in chat_history %}
+            <li class="message-item {{ 'sent' if message.sender_id == current_user.id else 'received' }}">
+                <div class="message-bubble">
+                    {{ message.content }}
+                </div>
+                <div class="message-meta">
+                    <span class="message-author">{{ 'You' if message.sender_id == current_user.id else partner.name }}</span>
+                    <span class="message-timestamp">{{ message.timestamp.strftime('%b %d, %I:%M %p') }}</span>
+                </div>
+            </li>
+        {% endfor %}
+        </ul>
+    </div>
+    <form method="POST" action="{{ url_for('main.send_message', recipient_id=partner.id) }}" class="chat-input-form" id="replyForm">
+        {{ form.csrf_token }}
+        <textarea name="content" rows="1" placeholder="Type your message..." required></textarea>
+        <button type="submit" class="send-btn"><i class="fas fa-paper-plane"></i></button>
+    </form>
+</div>
 {% else %}
     <p>Select a conversation to view messages.</p>
 {% endif %}
@@ -71,13 +57,16 @@
     padding: 1em;
     margin-bottom: 2em;
 }
-.chat-section {
+.chat-container {
     border-radius: 10px;
     padding: 1em;
     background: #f7fafd;
     max-width: 500px;
     margin: 0 auto 2em auto;
     box-shadow: 0 2px 8px rgba(33,147,176,0.08);
+}
+.chat-header {
+    margin-bottom: 1em;
 }
 .message-list {
     list-style-type: none;
@@ -113,8 +102,25 @@
 .cta-button:hover {
     background-color: #6dd5ed;
 }
+.send-btn {
+    background-color: #2193b0;
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.send-btn i {
+    font-size: 18px;
+}
 @media (max-width: 600px) {
-    .chat-section {
+    .chat-container {
         max-width: 100%;
         padding: 0.5em;
     }

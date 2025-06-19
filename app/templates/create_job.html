@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Post a Job</h1>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <ul>
+    {% for category, message in messages %}
+      <li class="{{ category }}">{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+{% if form.errors %}
+  <div class="alert alert-danger">
+    <ul>
+      {% for field, errors in form.errors.items() %}
+        {% for error in errors %}
+          <li>{{ form[field].label.text }}: {{ error }}</li>
+        {% endfor %}
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+<form method="POST">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+        {{ form.title.label }} {{ form.title(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.description.label }} {{ form.description(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.location.label }} {{ form.location(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.budget.label }} {{ form.budget(class="form-control") }}
+    </div>
+    <button type="submit" class="cta-button">Post Job</button>
+</form>
+{% endblock %}

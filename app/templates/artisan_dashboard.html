@@ -4,284 +4,117 @@
 <div class="dashboard-header">
     <h1>Artisan Dashboard</h1>
     <div class="dashboard-actions">
+        <a href="{{ url_for('main.artisan_profile') }}" class="cta-button"><i class="fas fa-user"></i> Edit Profile</a>
         <a href="{{ url_for('main.artisan_messages') }}" class="cta-button"><i class="fas fa-comments"></i> Messages</a>
-        <button id="settingsBtn" class="cta-button"><i class="fas fa-cog"></i> Settings</button>
+        <div class="settings-dropdown">
+            <button class="cta-button settingsBtn"><i class="fas fa-cog"></i> Settings <i class="fas fa-caret-down"></i></button>
+            <div id="settingsMenu" class="dropdown-menu">
+                <a href="{{ url_for('main.upload_profile_pic') }}"><i class="fas fa-user-edit"></i> Edit Profile Picture</a>
+                <a href="{{ url_for('main.logout') }}" style="color: #e74c3c;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
     </div>
 </div>
-<p>Welcome, {{ current_user.name }} ({{ artisan.skills }})!</p>
-
-<!-- Messages Modal (hidden by default, only shown when button is clicked) -->
-<div id="messagesModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <span class="close" id="closeMessagesModal">&times;</span>
-    <h2>Your Chats</h2>
-    {% if chat_histories %}
-        {% for other_id, msgs in chat_histories.items() %}
-            <div class="chat-section">
-                <h3>Chat with {{ participants[other_id].name }}</h3>
-                <ul class="message-list">
-                {% for message in msgs %}
-                    <li class="message-item {{ 'sent' if message.sender_id == current_user.id else 'received' }}">
-                        <div class="message-bubble">
-                            <span class="message-author">{{ 'You' if message.sender_id == current_user.id else participants[other_id].name }}</span>:
-                            {{ message.content }}
-                        </div>
-                        <p class="message-timestamp"><small>{{ message.timestamp.strftime('%B %d, %Y, %I:%M %p') }}</small></p>
-                        {% if message.sender_id != current_user.id %}
-                        <button type="button" onclick="showReplyForm({{ message.id }})">Reply</button>
-                        <div id="replyForm-{{ message.id }}" class="reply-form">
-                            <form method="POST" action="{{ url_for('main.reply_message', message_id=message.id) }}">
-                                {{ form.csrf_token }}
-                                <textarea name="content" rows="3" cols="40" placeholder="Type your reply..." required></textarea>
-                                <button type="submit">Send Reply</button>
-                            </form>
-                        </div>
-                        {% endif %}
-                        {% set replies = message.replies.all() %}
-                        {% if replies %}
-                            <ul class="reply-list">
-                            {% for reply in replies %}
-                                <li class="reply-item">
-                                    <p><strong>Reply from {{ reply.sender.name }}:</strong> {{ reply.content }}</p>
-                                    <p><strong>Sent:</strong> {{ reply.timestamp.strftime('%B %d, %Y, %I:%M %p') }}</p>
-                                </li>
-                            {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </li>
-                {% endfor %}
-                </ul>
-            </div>
-        {% endfor %}
-    {% else %}
-        <p>You have no chat history yet.</p>
-    {% endif %}
-  </div>
+<div class="profile-pic-preview" style="text-align:center;margin-bottom:1em;">
+    <img src="{{ current_user.profile_pic or url_for('static', filename='images/handyverse-hero.png') }}" alt="Profile Picture" class="profile-pic" style="width:90px;height:90px;border-radius:50%;object-fit:cover;">
 </div>
-
-<!-- Settings Modal (hidden by default) -->
-<div id="settingsModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <span class="close" id="closeSettingsModal">&times;</span>
-    <h2>Settings</h2>
-    <p>Settings functionality coming soon.</p>
-  </div>
-</div>
-
-<hr>
-
-<p><a href="{{ url_for('main.upload_profile_pic') }}">Upload Profile Picture</a></p>
-<p><a href="{{ url_for('main.logout') }}">Logout</a></p>
+<p>Welcome, <strong>{{ current_user.name }}</strong>{% if artisan and artisan.skills %} (<em>{{ artisan.skills }}</em>){% endif %}!</p>
 {% endblock %}
 
 {% block styles %}
 <style>
-/*
-Beautiful UI/UX enhancements for dashboard and modals
-*/
-body {
-    min-height: 100vh;
-    background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
-    font-family: 'Roboto', Arial, sans-serif;
-    color: #222;
-}
 .dashboard-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(255,255,255,0.85);
-    border-radius: 18px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-    padding: 24px 32px 16px 32px;
-    margin-bottom: 24px;
+    background: linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%);
+    color: #fff;
+    padding: 1.2em 1.5em;
+    border-radius: 14px;
+    margin-bottom: 2em;
+    box-shadow: 0 2px 8px rgba(33,147,176,0.10);
 }
 .dashboard-header h1 {
-    font-size: 2.2rem;
-    font-weight: 700;
-    letter-spacing: 1px;
     margin: 0;
+    font-size: 2em;
+    letter-spacing: 1px;
 }
 .dashboard-actions {
     display: flex;
-    gap: 16px;
+    align-items: center;
+    gap: 1em;
+}
+.profile-pic-preview img.profile-pic {
+    border: 2px solid #2193b0;
+    margin-bottom: 0.5em;
 }
 .cta-button {
-    background: linear-gradient(90deg, #6dd5ed 0%, #2193b0 100%);
+    background: linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%);
     color: #fff;
     border: none;
     border-radius: 24px;
-    padding: 10px 28px;
+    padding: 10px 24px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(33,147,176,0.08);
     transition: background 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
 }
 .cta-button:hover {
-    background: linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%);
+    background: linear-gradient(90deg, #6dd5ed 0%, #2193b0 100%);
     transform: translateY(-2px) scale(1.04);
 }
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100vw;
-    height: 100vh;
-    overflow: auto;
-    background: rgba(30,40,60,0.25);
-    animation: fadeInBg 0.3s;
-}
-@keyframes fadeInBg {
-    from { background: rgba(30,40,60,0); }
-    to { background: rgba(30,40,60,0.25); }
-}
-.modal-content {
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(8px);
-    margin: 5% auto;
-    padding: 32px 24px 24px 24px;
-    border-radius: 18px;
-    box-shadow: 0 8px 32px rgba(33,147,176,0.18);
-    width: 95%;
-    max-width: 600px;
+.settings-dropdown {
     position: relative;
-    animation: popIn 0.35s cubic-bezier(.68,-0.55,.27,1.55);
-}
-@keyframes popIn {
-    0% { transform: scale(0.85) translateY(40px); opacity: 0; }
-    100% { transform: scale(1) translateY(0); opacity: 1; }
-}
-.close {
-    color: #2193b0;
-    float: right;
-    font-size: 2rem;
-    font-weight: bold;
-    cursor: pointer;
-    position: absolute;
-    right: 24px;
-    top: 18px;
-    transition: color 0.2s;
-}
-.close:hover {
-    color: #176b87;
-}
-.message-list {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 16px 0;
-}
-.message-item {
-    margin-bottom: 18px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-.message-item.sent {
-    align-items: flex-end;
-}
-.message-bubble {
     display: inline-block;
-    padding: 12px 20px;
-    border-radius: 22px;
-    background: linear-gradient(90deg, #d1e7ff 0%, #b2fefa 100%);
-    color: #222;
-    box-shadow: 0 2px 8px rgba(33,147,176,0.07);
-    font-size: 1rem;
-    margin-bottom: 2px;
-    max-width: 80vw;
-    word-break: break-word;
 }
-.message-item.received .message-bubble {
-    background: linear-gradient(90deg, #e2ffe1 0%, #f9f9f9 100%);
-}
-.message-timestamp {
-    font-size: 0.85em;
-    color: #888;
-    margin: 2px 0 0 0;
-    text-align: right;
-}
-.chat-section {
-    margin-bottom: 32px;
-    background: rgba(255,255,255,0.7);
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    background: #fff;
+    min-width: 180px;
+    box-shadow: 0 8px 24px rgba(33,147,176,0.12);
     border-radius: 12px;
-    box-shadow: 0 1px 6px rgba(33,147,176,0.05);
-    padding: 18px 14px 8px 14px;
-}
-.reply-list {
-    list-style-type: none;
-    padding: 0;
+    z-index: 100;
     margin-top: 8px;
+    padding: 0.5em 0;
 }
-.reply-item {
-    margin-left: 20px;
-    background: linear-gradient(90deg, #eaf1fb 0%, #f9f9f9 100%);
-    border: 1px solid #d1e7ff;
-    padding: 10px 14px;
-    border-radius: 10px;
-    margin-bottom: 6px;
-    box-shadow: 0 1px 4px rgba(33,147,176,0.06);
-}
-.reply-form {
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    transition: max-height 0.4s, opacity 0.4s;
-    margin-top: 6px;
-}
-.reply-form.open {
-    max-height: 200px;
-    opacity: 1;
-}
-.reply-form textarea {
-    width: 100%;
+.dropdown-menu a {
+    color: #2193b0;
+    padding: 12px 20px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.7em;
     border-radius: 8px;
-    border: 1px solid #b2fefa;
-    padding: 8px;
-    font-size: 1rem;
-    margin-bottom: 6px;
-    resize: vertical;
+    font-weight: 500;
+    transition: background 0.2s;
+    font-size: 1em;
 }
-.reply-form button[type="submit"] {
-    background: linear-gradient(90deg, #43cea2 0%, #185a9d 100%);
-    color: #fff;
-    border: none;
-    border-radius: 14px;
-    padding: 6px 18px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.2s;
+.dropdown-menu a:hover {
+    background: #e0eafc;
 }
-.reply-form button[type="submit"]:hover {
-    background: linear-gradient(90deg, #185a9d 0%, #43cea2 100%);
-    transform: scale(1.04);
+.settings-dropdown.open .dropdown-menu {
+    display: block;
 }
-.search-button {
-    background: linear-gradient(90deg, #43cea2 0%, #185a9d 100%);
-    color: #fff;
-    border: none;
-    border-radius: 20px;
-    padding: 8px 22px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    margin-left: 8px;
-    transition: background 0.2s, transform 0.2s;
-}
-.search-button:hover {
-    background: linear-gradient(90deg, #185a9d 0%, #43cea2 100%);
-    transform: translateY(-1px) scale(1.03);
-}
-@media (max-width: 600px) {
+@media (max-width: 700px) {
     .dashboard-header {
         flex-direction: column;
         align-items: flex-start;
-        padding: 18px 10px 10px 10px;
+        gap: 1em;
+        padding: 1em;
     }
-    .modal-content {
-        padding: 18px 6px 12px 6px;
+    .dashboard-header h1 {
+        font-size: 1.3em;
+    }
+    .dashboard-actions {
+        flex-direction: column;
+        gap: 0.7em;
+        width: 100%;
     }
 }
 </style>
@@ -290,34 +123,24 @@ body {
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const messagesBtn = document.getElementById('messagesBtn');
-    const messagesModal = document.getElementById('messagesModal');
-    const closeMessagesModal = document.getElementById('closeMessagesModal');
-    const settingsBtn = document.getElementById('settingsBtn');
-    const settingsModal = document.getElementById('settingsModal');
-    const closeSettingsModal = document.getElementById('closeSettingsModal');
-
-    if (messagesBtn && messagesModal && closeMessagesModal) {
-        messagesBtn.onclick = function() {
-            messagesModal.style.display = 'block';
-        };
-        closeMessagesModal.onclick = function() {
-            messagesModal.style.display = 'none';
-        };
-    }
-    if (settingsBtn && settingsModal && closeSettingsModal) {
-        settingsBtn.onclick = function() {
-            settingsModal.style.display = 'block';
-        };
-        closeSettingsModal.onclick = function() {
-            settingsModal.style.display = 'none';
-        };
-    }
-    // Only one window.onclick handler!
-    window.onclick = function(event) {
-        if (messagesModal && event.target == messagesModal) messagesModal.style.display = 'none';
-        if (settingsModal && event.target == settingsModal) settingsModal.style.display = 'none';
-    };
+    document.querySelectorAll('.settings-dropdown').forEach(function(dropdown) {
+        const btn = dropdown.querySelector('.settingsBtn');
+        if (btn) {
+            btn.onclick = function(e) {
+                e.stopPropagation();
+                // Close all other dropdowns
+                document.querySelectorAll('.settings-dropdown.open').forEach(function(openDropdown) {
+                    if (openDropdown !== dropdown) openDropdown.classList.remove('open');
+                });
+                dropdown.classList.toggle('open');
+            };
+        }
+    });
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.settings-dropdown.open').forEach(function(dropdown) {
+            dropdown.classList.remove('open');
+        });
+    });
 });
 </script>
 {% endblock %}

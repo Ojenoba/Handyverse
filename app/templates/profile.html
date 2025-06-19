@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Your Profile</h1>
+</div>
+<div class="profile-section">
+    <div class="profile-pic-preview">
+        <img src="{{ current_user.profile_pic or url_for('static', filename='images/handyverse-hero.png') }}" alt="Profile Picture" class="profile-pic" style="width:120px;height:120px;border-radius:50%;object-fit:cover;">
+        <form method="POST" enctype="multipart/form-data" action="{{ url_for('main.upload_profile_pic') }}">
+            {{ upload_form.hidden_tag() }}
+            {{ upload_form.file.label }} {{ upload_form.file() }}
+            <button type="submit">Change Picture</button>
+        </form>
+    </div>
+    <form method="POST" class="profile-form">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            {{ form.name.label }} {{ form.name(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.email.label }} {{ form.email(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.phone_number.label }} {{ form.phone_number(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.location.label }} {{ form.location(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.password.label }} {{ form.password(class="form-control", placeholder="Leave blank to keep current password") }}
+        </div>
+        <button type="submit" class="cta-button">Update Profile</button>
+    </form>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+            {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.profile-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 2em;
+}
+.profile-pic-preview {
+    margin-bottom: 2em;
+    text-align: center;
+}
+.profile-pic {
+    border: 3px solid #2193b0;
+    margin-bottom: 0.5em;
+}
+.profile-form {
+    max-width: 400px;
+    width: 100%;
+    background: #fff;
+    padding: 2em;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(33,147,176,0.10);
+}
+.form-group {
+    margin-bottom: 1.2em;
+}
+.cta-button {
+    background: linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%);
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    padding: 10px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(33,147,176,0.08);
+    transition: background 0.2s, transform 0.2s;
+}
+.cta-button:hover {
+    background: linear-gradient(90deg, #6dd5ed 0%, #2193b0 100%);
+    transform: translateY(-2px) scale(1.04);
+}
+</style>
+{% endblock %}

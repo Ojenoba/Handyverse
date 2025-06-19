@@ -4,59 +4,24 @@
 <div class="dashboard-header">
     <h1>User Dashboard</h1>
     <div class="dashboard-actions">
+        <a href="{{ url_for('main.profile') }}" class="cta-button">Edit Profile</a>
         <a href="{{ url_for('main.messages') }}" class="cta-button"><i class="fas fa-comments"></i> Messages</a>
-        <button id="settingsBtn" class="cta-button"><i class="fas fa-cog"></i> Settings</button>
+        <a href="#" id="show-favorites" class="cta-button"><i class="fas fa-heart"></i> My Favorites</a>
     </div>
 </div>
-<p>Welcome, {{ current_user.name }}!</p>
-
-<!-- Messages Modal (hidden by default, only shown when button is clicked) -->
-<div id="messagesModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <span class="close" id="closeMessagesModal">&times;</span>
-    <h2>Your Chats</h2>
-    {% if chat_histories %}
-        {% for other_id, msgs in chat_histories.items() %}
-            <div class="chat-section">
-                <h3>Chat with {{ participants[other_id].name }}</h3>
-                <ul class="message-list">
-                {% for message in msgs %}
-                    <li class="message-item {{ 'sent' if message.sender_id == current_user.id else 'received' }}">
-                        <div class="message-bubble">
-                            <span class="message-author">{{ 'You' if message.sender_id == current_user.id else participants[other_id].name }}</span>:
-                            {{ message.content }}
-                        </div>
-                        <p class="message-timestamp"><small>{{ message.timestamp.strftime('%B %d, %Y, %I:%M %p') }}</small></p>
-                    </li>
-                {% endfor %}
-                </ul>
-            </div>
-        {% endfor %}
-    {% else %}
-        <p>You have no chat history yet.</p>
-    {% endif %}
-  </div>
+<div class="profile-pic-preview" style="text-align:center;margin-bottom:1em;">
+    <img src="{{ current_user.profile_pic or url_for('static', filename='images/handyverse-hero.png') }}" alt="Profile Picture" class="profile-pic" style="width:90px;height:90px;border-radius:50%;object-fit:cover;">
 </div>
-
-<!-- Settings Modal (hidden by default) -->
-<div id="settingsModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <span class="close" id="closeSettingsModal">&times;</span>
-    <h2>Settings</h2>
-    <p>Settings functionality coming soon.</p>
-  </div>
-</div>
-
+<p>Welcome, <strong>{{ current_user.name }}</strong>!</p>
 <hr>
-
 <h2>Search for Artisans</h2>
 <form id="searchForm" onsubmit="searchArtisans(event)">
     <input type="text" id="searchLocation" name="location" placeholder="Enter your location (e.g., Lagos)" required>
-    <button type="submit" class="search-button">Search Artisans</button>
+    <button type="submit" class="search-button"><i class="fas fa-search"></i> Search Artisans</button>
+    <button type="button" id="useLocationBtn" class="cta-button" style="margin-left:1em;"><i class="fas fa-map-marker-alt"></i> Use My Location</button>
 </form>
 <div id="searchResults"></div>
-
-<p><a href="{{ url_for('main.logout') }}">Logout</a></p>
+<div id="favoritesSection" style="display:none;margin-top:2em;"></div>
 {% endblock %}
 
 {% block styles %}
@@ -74,36 +39,44 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(255,255,255,0.85);
-    border-radius: 18px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-    padding: 24px 32px 16px 32px;
-    margin-bottom: 24px;
+    background: linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%);
+    color: #fff;
+    padding: 1.2em 1.5em;
+    border-radius: 14px;
+    margin-bottom: 2em;
+    box-shadow: 0 2px 8px rgba(33,147,176,0.10);
 }
 .dashboard-header h1 {
-    font-size: 2.2rem;
-    font-weight: 700;
-    letter-spacing: 1px;
     margin: 0;
+    font-size: 2em;
+    letter-spacing: 1px;
 }
 .dashboard-actions {
     display: flex;
-    gap: 16px;
+    align-items: center;
+    gap: 1em;
+}
+.profile-pic-preview img.profile-pic {
+    border: 2px solid #2193b0;
+    margin-bottom: 0.5em;
 }
 .cta-button {
-    background: linear-gradient(90deg, #6dd5ed 0%, #2193b0 100%);
+    background: linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%);
     color: #fff;
     border: none;
     border-radius: 24px;
-    padding: 10px 28px;
+    padding: 10px 24px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(33,147,176,0.08);
     transition: background 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
 }
 .cta-button:hover {
-    background: linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%);
+    background: linear-gradient(90deg, #6dd5ed 0%, #2193b0 100%);
     transform: translateY(-2px) scale(1.04);
 }
 .modal {
@@ -195,20 +168,27 @@ body {
     padding: 18px 14px 8px 14px;
 }
 .search-button {
-    background: linear-gradient(90deg, #43cea2 0%, #185a9d 100%);
+    background: linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%);
     color: #fff;
     border: none;
-    border-radius: 20px;
-    padding: 8px 22px;
-    font-size: 1rem;
-    font-weight: 600;
+    border-radius: 18px;
+    padding: 8px 18px;
+    font-size: 1em;
+    font-weight: 500;
     cursor: pointer;
-    margin-left: 8px;
-    transition: background 0.2s, transform 0.2s;
+    margin-left: 0.5em;
+    transition: background 0.2s;
 }
 .search-button:hover {
-    background: linear-gradient(90deg, #185a9d 0%, #43cea2 100%);
-    transform: translateY(-1px) scale(1.03);
+    background: linear-gradient(90deg, #6dd5ed 0%, #2193b0 100%);
+}
+input[type="text"] {
+    border-radius: 10px;
+    border: 1px solid #b2fefa;
+    padding: 10px;
+    font-size: 1em;
+    width: 220px;
+    margin-right: 0.5em;
 }
 #searchResults {
     margin-top: 24px;
@@ -254,11 +234,54 @@ body {
     background: linear-gradient(90deg, #ffd200 0%, #f7971e 100%);
     transform: scale(1.04);
 }
-@media (max-width: 600px) {
+.settings-dropdown {
+    position: relative;
+    display: inline-block;
+}
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    background: #fff;
+    min-width: 180px;
+    box-shadow: 0 8px 24px rgba(33,147,176,0.12);
+    border-radius: 12px;
+    z-index: 100;
+    margin-top: 8px;
+    padding: 0.5em 0;
+}
+.dropdown-menu a {
+    color: #2193b0;
+    padding: 12px 20px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.7em;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: background 0.2s;
+    font-size: 1em;
+}
+.dropdown-menu a:hover {
+    background: #e0eafc;
+}
+.settings-dropdown.open .dropdown-menu {
+    display: block;
+}
+@media (max-width: 700px) {
     .dashboard-header {
         flex-direction: column;
         align-items: flex-start;
-        padding: 18px 10px 10px 10px;
+        gap: 1em;
+        padding: 1em;
+    }
+    .dashboard-header h1 {
+        font-size: 1.3em;
+    }
+    .dashboard-actions {
+        flex-direction: column;
+        gap: 0.7em;
+        width: 100%;
     }
     .modal-content {
         padding: 18px 6px 12px 6px;
@@ -272,36 +295,130 @@ body {
 
 {% block scripts %}
 <script>
-// Modal logic for Messages and Settings
-
 document.addEventListener('DOMContentLoaded', function() {
-    const messagesBtn = document.getElementById('messagesBtn');
-    const messagesModal = document.getElementById('messagesModal');
-    const closeMessagesModal = document.getElementById('closeMessagesModal');
-    const settingsBtn = document.getElementById('settingsBtn');
-    const settingsModal = document.getElementById('settingsModal');
-    const closeSettingsModal = document.getElementById('closeSettingsModal');
+    document.querySelectorAll('.settings-dropdown').forEach(function(dropdown) {
+        const btn = dropdown.querySelector('.settingsBtn');
+        if (btn) {
+            btn.onclick = function(e) {
+                e.stopPropagation();
+                // Close all other dropdowns
+                document.querySelectorAll('.settings-dropdown.open').forEach(function(openDropdown) {
+                    if (openDropdown !== dropdown) openDropdown.classList.remove('open');
+                });
+                dropdown.classList.toggle('open');
+            };
+        }
+    });
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.settings-dropdown.open').forEach(function(dropdown) {
+            dropdown.classList.remove('open');
+        });
+    });
+});
 
-    if (messagesBtn && messagesModal && closeMessagesModal) {
-        messagesBtn.onclick = function() {
-            messagesModal.style.display = 'block';
-        };
-        closeMessagesModal.onclick = function() {
-            messagesModal.style.display = 'none';
-        };
+function renderArtisans(artisans, favorites=[]) {
+    const results = document.getElementById('searchResults');
+    results.innerHTML = '';
+    if (!artisans.length) {
+        results.innerHTML = '<p>No artisans found.</p>';
+        return;
     }
-    if (settingsBtn && settingsModal && closeSettingsModal) {
-        settingsBtn.onclick = function() {
-            settingsModal.style.display = 'block';
-        };
-        closeSettingsModal.onclick = function() {
-            settingsModal.style.display = 'none';
-        };
+    const favIds = new Set(favorites.map(f => f.artisan_id));
+    artisans.forEach(artisan => {
+        const isFav = favIds.has(artisan.id);
+        results.innerHTML += `
+        <div class="artisan-profile" style="display:flex;align-items:center;gap:1em;margin-bottom:1em;">
+            <img src="${artisan.profile_pic}" alt="Profile" class="profile-pic" style="width:60px;height:60px;border-radius:50%;object-fit:cover;">
+            <div style="flex:1;">
+                <strong>${artisan.name}</strong><br>
+                <span>${artisan.skills} | ${artisan.location}</span>
+            </div>
+            <button class="favorite-btn" data-artisan-id="${artisan.id}" aria-label="${isFav ? 'Unfavorite' : 'Favorite'}">
+                <i class="${isFav ? 'fas' : 'far'} fa-heart"></i>
+            </button>
+        </div>`;
+    });
+}
+
+function fetchFavoritesAndRenderArtisans(artisans) {
+    fetch('/favorites')
+        .then(res => res.json())
+        .then(favs => renderArtisans(artisans, favs));
+}
+
+function searchArtisans(event) {
+    event.preventDefault();
+    const location = document.getElementById('searchLocation').value;
+    fetch(`/search?location=${encodeURIComponent(location)}`)
+        .then(response => response.json())
+        .then(data => fetchFavoritesAndRenderArtisans(data));
+}
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.favorite-btn')) {
+        const btn = e.target.closest('.favorite-btn');
+        const artisanId = btn.getAttribute('data-artisan-id');
+        const icon = btn.querySelector('i');
+        const isFavorited = icon.classList.contains('fas');
+        fetch(isFavorited ? `/unfavorite/${artisanId}` : `/favorite/${artisanId}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                icon.classList.toggle('fas');
+                icon.classList.toggle('far');
+            }
+        });
     }
-    window.onclick = function(event) {
-        if (event.target == messagesModal) messagesModal.style.display = 'none';
-        if (event.target == settingsModal) settingsModal.style.display = 'none';
-    };
+    if (e.target.id === 'show-favorites') {
+        e.preventDefault();
+        fetch('/favorites')
+            .then(res => res.json())
+            .then(favs => {
+                const favSection = document.getElementById('favoritesSection');
+                favSection.innerHTML = '<h2>My Favorites</h2>';
+                if (!favs.length) {
+                    favSection.innerHTML += '<p>No favorites yet.</p>';
+                } else {
+                    favs.forEach(fav => {
+                        favSection.innerHTML += `
+                        <div class="artisan-profile" style="display:flex;align-items:center;gap:1em;margin-bottom:1em;">
+                            <img src="${fav.profile_pic}" alt="Profile" class="profile-pic" style="width:60px;height:60px;border-radius:50%;object-fit:cover;">
+                            <div style="flex:1;">
+                                <strong>${fav.name}</strong><br>
+                                <span>${fav.skills} | ${fav.location}</span>
+                            </div>
+                        </div>`;
+                    });
+                }
+                favSection.style.display = 'block';
+                window.scrollTo({top: favSection.offsetTop, behavior: 'smooth'});
+            });
+    }
+    if (e.target.id === 'useLocationBtn') {
+        e.preventDefault();
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser.');
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            fetch(`/search?lat=${lat}&lng=${lng}`)
+                .then(response => response.json())
+                .then(data => fetchFavoritesAndRenderArtisans(data));
+        }, function(error) {
+            if (error.code === error.PERMISSION_DENIED) {
+                alert('Location permission denied. Please allow access to use this feature.');
+            } else {
+                alert('Unable to retrieve your location.');
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

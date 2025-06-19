@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 style="text-align:center;margin-bottom:1em;">Job Listings</h1>
+{% if current_user.is_authenticated and not current_user.is_artisan %}
+  <div style="text-align:center;margin-bottom:2em;">
+    <a href="{{ url_for('main.create_job') }}" class="cta-button" style="font-size:1.1em;"><i class="fa fa-plus"></i> Post a Job</a>
+  </div>
+{% endif %}
+<div class="jobs-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.5em;">
+  {% for job in jobs %}
+    <div class="job-card" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(33,147,176,0.10);padding:1.5em;">
+      <a href="{{ url_for('main.job_detail', job_id=job.id) }}" style="text-decoration:none;color:inherit;"><h2 style="margin-top:0;">{{ job.title }}</h2></a>
+      <div style="font-size:0.95em;color:#555;margin-bottom:0.5em;">
+        <i class="fa fa-user"></i> {{ job.user.name }} &nbsp;|&nbsp; <i class="fa fa-map-marker-alt"></i> {{ job.location or 'No location' }} &nbsp;|&nbsp; <i class="fa fa-money-bill"></i> {{ job.budget or 'N/A' }}
+      </div>
+      <p style="margin-bottom:0.5em;">{{ job.description|truncate(120) }}</p>
+      <a href="{{ url_for('main.job_detail', job_id=job.id) }}" class="cta-button" style="font-size:0.95em;padding:0.4em 1.2em;">View Details</a>
+    </div>
+  {% else %}
+    <div style="grid-column:1/-1;text-align:center;color:#888;font-size:1.2em;">
+      <i class="fa fa-briefcase" style="font-size:2em;"></i><br>No jobs posted yet.
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

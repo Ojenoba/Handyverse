@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Your Artisan Profile</h1>
+</div>
+<div class="profile-section">
+    <div class="profile-pic-preview">
+        <img src="{{ current_user.profile_pic or url_for('static', filename='images/handyverse-hero.png') }}" alt="Profile Picture" class="profile-pic" style="width:120px;height:120px;border-radius:50%;object-fit:cover;">
+        <form method="POST" enctype="multipart/form-data" action="{{ url_for('main.upload_profile_pic') }}">
+            {{ upload_form.hidden_tag() }}
+            {{ upload_form.file.label }} {{ upload_form.file() }}
+            <button type="submit">Change Picture</button>
+        </form>
+    </div>
+    <form method="POST" class="profile-form">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            {{ form.name.label }} {{ form.name(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.email.label }} {{ form.email(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.phone_number.label }} {{ form.phone_number(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.location.label }} {{ form.location(class="form-control") }}
+        </div>
+        <div class="form-group">
+            <label for="skills">Skills/Trade</label>
+            <input type="text" id="skills" name="skills" class="form-control" value="{{ artisan.skills if artisan else '' }}">
+        </div>
+        <input type="hidden" id="latitude" name="latitude" value="{{ artisan.latitude if artisan else '' }}">
+        <input type="hidden" id="longitude" name="longitude" value="{{ artisan.longitude if artisan else '' }}">
+        <button type="button" id="useLocationBtn" class="cta-button" style="margin-bottom:1em;"><i class="fas fa-map-marker-alt"></i> Use My Location</button>
+        <div id="map" style="height:300px;width:100%;margin-bottom:1em;"></div>
+        <div class="form-group">
+            {{ form.password.label }} {{ form.password(class="form-control", placeholder="Leave blank to keep current password") }}
+        </div>
+        <button type="submit" class="cta-button">Update Profile</button>
+    </form>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+            {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.profile-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 2em;
+}
+.profile-pic-preview {
+    margin-bottom: 2em;
+    text-align: center;
+}
+.profile-pic {
+    border: 3px solid #2193b0;
+    margin-bottom: 0.5em;
+}
+.profile-form {
+    max-width: 400px;
+    width: 100%;
+    background: #fff;
+    padding: 2em;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(33,147,176,0.10);
+}
+.form-group {
+    margin-bottom: 1.2em;
+}
+.cta-button {
+    background: linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%);
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    padding: 10px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(33,147,176,0.08);
+    transition: background 0.2s, transform 0.2s;
+}
+.cta-button:hover {
+    background: linear-gradient(90deg, #6dd5ed 0%, #2193b0 100%);
+    transform: translateY(-2px) scale(1.04);
+}
+#map { border-radius: 12px; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var useLocationBtn = document.getElementById('useLocationBtn');
+    if (useLocationBtn) {
+        useLocationBtn.addEventListener('click', function() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(function(position) {
+                document.getElementById('latitude').value = position.coords.latitude;
+                document.getElementById('longitude').value = position.coords.longitude;
+                if (window.setMapPin) setMapPin(position.coords.latitude, position.coords.longitude);
+                alert('Location set!');
+            }, function(error) {
+                if (error.code === error.PERMISSION_DENIED) {
+                    alert('Location permission denied. Please allow access to use this feature.');
+                } else {
+                    alert('Unable to retrieve your location.');
+                }
+            });
+        });
+    }
+    // Leaflet map for manual pin drop
+    var defaultLat = parseFloat("{{ artisan.latitude if artisan and artisan.latitude is not none else 6.5244 }}");
+    var defaultLng = parseFloat("{{ artisan.longitude if artisan and artisan.longitude is not none else 3.3792 }}");
+    let map = L.map('map').setView([defaultLat, defaultLng], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+    let marker = null;
+    function setMapPin(lat, lng) {
+        if (marker) map.removeLayer(marker);
+        marker = L.marker([lat, lng], {draggable:true}).addTo(map);
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+        marker.on('dragend', function(e) {
+            const pos = marker.getLatLng();
+            document.getElementById('latitude').value = pos.lat;
+            document.getElementById('longitude').value = pos.lng;
+        });
+    }
+    // Set marker if lat/lng already present
+    const lat = document.getElementById('latitude').value;
+    const lng = document.getElementById('longitude').value;
+    if (lat && lng) setMapPin(lat, lng);
+    map.on('click', function(e) {
+        setMapPin(e.latlng.lat, e.latlng.lng);
+    });
+    window.setMapPin = setMapPin;
+});
+</script>
+{% endblock %}

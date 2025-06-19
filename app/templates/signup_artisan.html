@@ -8,10 +8,12 @@
     {% block head %}
     <meta name="csrf-token" content="{{ csrf_token() }}">
     {% endblock %}
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 </head>
 <body>
     <header>
-        <h1>Handyverse - Artisan Sign Up</h1>
+        <a href="{{ url_for('main.index') }}" style="text-decoration:none;color:inherit;"><h1>Handyverse - Artisan Sign Up</h1></a>
     </header>
     <main>
         <section class="signup-section">
@@ -46,8 +48,15 @@
                 <div class="form-group">
                     <label for="location">Location:</label>
                     <input type="text" id="location" name="location" required>
-                    <span id="location-error" class="error"></span>
                 </div>
+                <div class="form-group">
+                    <label for="skills">Skills/Trade:</label>
+                    <input type="text" id="skills" name="skills" required>
+                </div>
+                <input type="hidden" id="latitude" name="latitude">
+                <input type="hidden" id="longitude" name="longitude">
+                <button type="button" id="useLocationBtn" class="cta-button" style="margin-bottom:1em;"><i class="fas fa-map-marker-alt"></i> Use My Location</button>
+                <div id="map" style="height:300px;width:100%;margin-bottom:1em;"></div>
                 <button type="submit" class="cta-button">Sign Up</button>
             </form>
             <p>Already have an account? <a href="/login">Login</a></p>
@@ -58,8 +67,52 @@
     </footer>
     <script src="{{ url_for('static', filename='scripts.js') }}"></script>
     <script>
-        const artisanSignupForm = document.getElementById('artisanSignupForm');
-        if (artisanSignupForm) artisanSignupForm.addEventListener('submit', validateArtisanSignup);
+    document.getElementById('useLocationBtn').addEventListener('click', function() {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser.');
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(function(position) {
+            document.getElementById('latitude').value = position.coords.latitude;
+            document.getElementById('longitude').value = position.coords.longitude;
+            if (window.setMapPin) setMapPin(position.coords.latitude, position.coords.longitude);
+            alert('Location set!');
+        }, function(error) {
+            if (error.code === error.PERMISSION_DENIED) {
+                alert('Location permission denied. Please allow access to use this feature.');
+            } else {
+                alert('Unable to retrieve your location.');
+            }
+        });
+    });
+    // Leaflet map for manual pin drop
+    var defaultLat = 6.5244;
+    var defaultLng = 3.3792;
+    let map = L.map('map').setView([defaultLat, defaultLng], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+    let marker = null;
+    function setMapPin(lat, lng) {
+        if (marker) map.removeLayer(marker);
+        marker = L.marker([lat, lng], {draggable:true}).addTo(map);
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+        marker.on('dragend', function(e) {
+            const pos = marker.getLatLng();
+            document.getElementById('latitude').value = pos.lat;
+            document.getElementById('longitude').value = pos.lng;
+        });
+    }
+    // Set marker if lat/lng already present
+    const lat = document.getElementById('latitude').value;
+    const lng = document.getElementById('longitude').value;
+    if (lat && lng) setMapPin(lat, lng);
+    map.on('click', function(e) {
+        setMapPin(e.latlng.lat, e.latlng.lng);
+    });
+    window.setMapPin = setMapPin;
     </script>
 </body>
 </html>

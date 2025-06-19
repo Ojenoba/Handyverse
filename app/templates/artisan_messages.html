@@ -10,17 +10,20 @@
             {% for message in msgs %}
                 <li class="message-item {{ 'sent' if message.sender_id == current_user.id else 'received' }}">
                     <div class="message-bubble">
-                        <span class="message-author">{{ 'You' if message.sender_id == current_user.id else participants[other_id].name }}</span>:
                         {{ message.content }}
                     </div>
-                    <p class="message-timestamp"><small>{{ message.timestamp.strftime('%B %d, %Y, %I:%M %p') }}</small></p>
+                    <div class="message-meta">
+                        <span class="message-author">{{ 'You' if message.sender_id == current_user.id else participants[other_id].name }}</span>
+                        <span class="message-timestamp">{{ message.timestamp.strftime('%b %d, %I:%M %p') }}</span>
+                    </div>
                 </li>
             {% endfor %}
             </ul>
-            <form method="POST" action="{{ url_for('main.send_message', recipient_id=other_id) }}" class="reply-form">
+            <!-- Single reply/send box at the end of the chat -->
+            <form method="POST" action="{{ url_for('main.send_message', recipient_id=other_id) }}" class="chat-input-form" id="replyForm-{{ other_id }}">
                 {{ form.csrf_token }}
-                <textarea name="content" rows="2" cols="40" placeholder="Type your message..." required></textarea>
-                <button type="submit" class="cta-button">Send</button>
+                <textarea name="content" rows="1" placeholder="Type your message..." required></textarea>
+                <button type="submit" class="send-btn"><i class="fas fa-paper-plane"></i></button>
             </form>
         </div>
     {% endfor %}
@@ -49,29 +52,68 @@
     border-radius: 8px;
     box-shadow: 0 1px 4px rgba(33,147,176,0.05);
 }
-.reply-form {
-    margin-top: 0.5em;
+.message-item {
+    margin-bottom: 1.2em;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.message-item.sent {
+    align-items: flex-end;
+}
+.message-bubble {
+    background: #e0eafc;
+    color: #222;
+    padding: 0.7em 1.2em;
+    border-radius: 18px;
+    max-width: 70%;
+    word-break: break-word;
+    font-size: 1em;
+    box-shadow: 0 1px 4px rgba(33,147,176,0.05);
+}
+.message-item.sent .message-bubble {
+    background: #2193b0;
+    color: #fff;
+}
+.message-meta {
+    font-size: 0.8em;
+    color: #888;
+    margin-top: 0.2em;
     display: flex;
     gap: 8px;
 }
-.reply-form textarea {
+.chat-input-form {
+    display: flex;
+    align-items: center;
+    padding: 1em;
+    background: #fff;
+    border-top: 1px solid #e0eafc;
+}
+.chat-input-form textarea {
     flex: 1;
-    border-radius: 12px;
-    padding: 8px;
+    border-radius: 16px;
     border: 1px solid #ccc;
+    padding: 0.7em;
+    font-size: 1em;
     resize: none;
+    margin-right: 1em;
 }
-.cta-button {
-    background-color: #2193b0;
-    color: white;
+.send-btn {
+    background: #2193b0;
+    color: #fff;
     border: none;
-    padding: 10px 20px;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 1.3em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: background-color 0.3s;
-    border-radius: 12px;
+    transition: background 0.2s;
 }
-.cta-button:hover {
-    background-color: #6dd5ed;
+.send-btn:hover {
+    background: #6dd5ed;
 }
 @media (max-width: 600px) {
     .chat-section {
@@ -80,4 +122,63 @@
     }
 }
 </style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // AJAX for reply/send in chat
+    const forms = document.querySelectorAll('.chat-input-form');
+    forms.forEach(function(replyForm) {
+        replyForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const textarea = replyForm.querySelector('textarea[name="content"]');
+            const content = textarea.value.trim();
+            if (!content) return;
+
+            fetch(replyForm.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams({
+                    'content': content,
+                    'csrf_token': replyForm.querySelector('[name="csrf_token"]').value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    textarea.value = '';
+                    loadMessages(replyForm);
+                } else {
+                    alert(data.message || 'Failed to send message.');
+                }
+            });
+        });
+    });
+
+    setInterval(function() {
+        document.querySelectorAll('.chat-section').forEach(loadMessages);
+    }, 3000);
+
+    function loadMessages(chatSection) {
+        if (!chatSection) return;
+        let url = window.location.pathname + window.location.search;
+        url += (url.indexOf('?') === -1 ? '?' : '&') + 'ajax=1';
+        fetch(url)
+            .then(response => response.text())
+            .then(html => {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                const newList = temp.querySelector('.message-list');
+                const oldList = chatSection.querySelector('.message-list');
+                if (newList && oldList) {
+                    oldList.innerHTML = newList.innerHTML;
+                }
+            });
+    }
+});
+</script>
 {% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="job-detail-card" style="max-width:600px;margin:2em auto;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(33,147,176,0.10);padding:2em;">
+  <h1 style="margin-top:0;">{{ job.title }}</h1>
+  <div style="font-size:1em;color:#555;margin-bottom:0.5em;">
+    <i class="fa fa-user"></i> {{ job.user.name }} &nbsp;|&nbsp; <i class="fa fa-map-marker-alt"></i> {{ job.location or 'N/A' }} &nbsp;|&nbsp; <i class="fa fa-money-bill"></i> {{ job.budget or 'N/A' }}
+  </div>
+  <p style="margin-bottom:1.5em;">{{ job.description }}</p>
+  <hr style="margin:1.5em 0;">
+  {% if current_user.is_authenticated and current_user.is_artisan and current_user.id != job.user_id %}
+  <form method="POST" action="{{ url_for('main.apply_to_job', job_id=job.id) }}">
+      {{ csrf_token() }}
+      <textarea name="message" placeholder="Your application message" required></textarea>
+      <button type="submit">Apply</button>
+  </form>
+  {% elif applicants is not none %}
+    <h3>Applicants</h3>
+    <ul style="list-style:none;padding:0;">
+      {% for app in applicants %}
+        <li style="margin-bottom:1em;padding:1em;background:#f7fafd;border-radius:8px;">
+          <strong><i class="fa fa-user"></i> {{ app.artisan.user.name }}</strong><br>
+          <span style="color:#555;">{{ app.message or 'No message' }}</span><br>
+          <span style="font-size:0.95em;color:#888;">Status: {{ app.status }}</span>
+        </li>
+      {% else %}
+        <li style="color:#888;">No applications yet.</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  <a href="{{ url_for('main.list_jobs') }}" class="cta-button" style="background:#eee;color:#2193b0;margin-top:1em;"><i class="fa fa-arrow-left"></i> Back to Jobs</a>
+</div>
+{% endblock %}

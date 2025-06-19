@@ -1,4 +1,36 @@
-venv/
+# Python cache and compiled files
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+ENV/
 .env
+
+# Environment variables and secrets
+.env
+*.env
+
+# Database files (SQLite)
+*.db
+*.sqlite3
+instance/
+
+# Uploaded files (if you store user uploads in a folder)
+uploads/
+
+# Flask-Migrate files (optional, if you want to ignore migration history)
+migrations/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Test/coverage
+.pytest_cache/
+.coverage
+htmlcov/
