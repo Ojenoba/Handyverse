@@ -10,17 +10,52 @@
     </div>
 </div>
 <div class="profile-pic-preview" style="text-align:center;margin-bottom:1em;">
-    <img src="{{ current_user.profile_pic or url_for('static', filename='images/handyverse-hero.png') }}" alt="Profile Picture" class="profile-pic" style="width:90px;height:90px;border-radius:50%;object-fit:cover;">
+    {% set profile_pic_url = current_user.profile_pic if current_user.profile_pic else url_for('static', filename='images/handyverse-hero.png') %}
+<img
+  src="{{ profile_pic_url }}"
+  alt="Profile Picture"
+  class="profile-pic"
+  style="width:90px;height:90px;border-radius:50%;object-fit:cover;">
+    <p>Profile Picture</p>
+    {% if current_user.profile_pic %}
+        <a href="{{ url_for('main.upload_profile_pic') }}" class="cta-button">Change Picture</a>
+    {% else %}
+        <a href="{{ url_for('main.upload_profile_pic') }}" class="cta-button">Upload Picture</a>
+    {% endif %}
 </div>
 <p>Welcome, <strong>{{ current_user.name }}</strong>!</p>
+
+<!-- Posted Jobs Section -->
 <hr>
+<h2>Posted Jobs</h2>
+<div id="postedJobsSection" style="margin-bottom:2em;">
+    {% if my_jobs and my_jobs|length > 0 %}
+        <div class="jobs-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.5em;">
+            {% for job in my_jobs %}
+                <div class="job-card" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(33,147,176,0.10);padding:1.5em;">
+                    <a href="{{ url_for('main.job_detail', job_id=job.id) }}" style="text-decoration:none;color:inherit;"><h3 style="margin-top:0;">{{ job.title }}</h3></a>
+                    <div style="font-size:0.95em;color:#555;margin-bottom:0.5em;">
+                        <i class="fa fa-map-marker-alt"></i> {{ job.location or 'No location' }} &nbsp;|&nbsp; <i class="fa fa-money-bill"></i> {{ job.budget or 'N/A' }}
+                    </div>
+                    <p style="margin-bottom:0.5em;">{{ job.description|truncate(120) }}</p>
+                    <a href="{{ url_for('main.job_detail', job_id=job.id) }}" class="cta-button" style="font-size:0.95em;padding:0.4em 1.2em;">View Details</a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="color:#888;font-size:1.1em;margin:1em 0;">You have not posted any jobs yet.</div>
+    {% endif %}
+</div>
+<hr>
+<!-- End Posted Jobs Section -->
+
 <h2>Search for Artisans</h2>
-<form id="searchForm" onsubmit="searchArtisans(event)">
+<form id="searchForm">
     <input type="text" id="searchLocation" name="location" placeholder="Enter your location (e.g., Lagos)" required>
     <button type="submit" class="search-button"><i class="fas fa-search"></i> Search Artisans</button>
     <button type="button" id="useLocationBtn" class="cta-button" style="margin-left:1em;"><i class="fas fa-map-marker-alt"></i> Use My Location</button>
 </form>
-<div id="searchResults"></div>
+<div id="artisansGrid"></div>
 <div id="favoritesSection" style="display:none;margin-top:2em;"></div>
 {% endblock %}
 
@@ -190,7 +225,7 @@ input[type="text"] {
     width: 220px;
     margin-right: 0.5em;
 }
-#searchResults {
+#artisansGrid {
     margin-top: 24px;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -294,131 +329,5 @@ input[type="text"] {
 {% endblock %}
 
 {% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.settings-dropdown').forEach(function(dropdown) {
-        const btn = dropdown.querySelector('.settingsBtn');
-        if (btn) {
-            btn.onclick = function(e) {
-                e.stopPropagation();
-                // Close all other dropdowns
-                document.querySelectorAll('.settings-dropdown.open').forEach(function(openDropdown) {
-                    if (openDropdown !== dropdown) openDropdown.classList.remove('open');
-                });
-                dropdown.classList.toggle('open');
-            };
-        }
-    });
-    document.addEventListener('click', function() {
-        document.querySelectorAll('.settings-dropdown.open').forEach(function(dropdown) {
-            dropdown.classList.remove('open');
-        });
-    });
-});
-
-function renderArtisans(artisans, favorites=[]) {
-    const results = document.getElementById('searchResults');
-    results.innerHTML = '';
-    if (!artisans.length) {
-        results.innerHTML = '<p>No artisans found.</p>';
-        return;
-    }
-    const favIds = new Set(favorites.map(f => f.artisan_id));
-    artisans.forEach(artisan => {
-        const isFav = favIds.has(artisan.id);
-        results.innerHTML += `
-        <div class="artisan-profile" style="display:flex;align-items:center;gap:1em;margin-bottom:1em;">
-            <img src="${artisan.profile_pic}" alt="Profile" class="profile-pic" style="width:60px;height:60px;border-radius:50%;object-fit:cover;">
-            <div style="flex:1;">
-                <strong>${artisan.name}</strong><br>
-                <span>${artisan.skills} | ${artisan.location}</span>
-            </div>
-            <button class="favorite-btn" data-artisan-id="${artisan.id}" aria-label="${isFav ? 'Unfavorite' : 'Favorite'}">
-                <i class="${isFav ? 'fas' : 'far'} fa-heart"></i>
-            </button>
-        </div>`;
-    });
-}
-
-function fetchFavoritesAndRenderArtisans(artisans) {
-    fetch('/favorites')
-        .then(res => res.json())
-        .then(favs => renderArtisans(artisans, favs));
-}
-
-function searchArtisans(event) {
-    event.preventDefault();
-    const location = document.getElementById('searchLocation').value;
-    fetch(`/search?location=${encodeURIComponent(location)}`)
-        .then(response => response.json())
-        .then(data => fetchFavoritesAndRenderArtisans(data));
-}
-
-document.addEventListener('click', function(e) {
-    if (e.target.closest('.favorite-btn')) {
-        const btn = e.target.closest('.favorite-btn');
-        const artisanId = btn.getAttribute('data-artisan-id');
-        const icon = btn.querySelector('i');
-        const isFavorited = icon.classList.contains('fas');
-        fetch(isFavorited ? `/unfavorite/${artisanId}` : `/favorite/${artisanId}`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                icon.classList.toggle('fas');
-                icon.classList.toggle('far');
-            }
-        });
-    }
-    if (e.target.id === 'show-favorites') {
-        e.preventDefault();
-        fetch('/favorites')
-            .then(res => res.json())
-            .then(favs => {
-                const favSection = document.getElementById('favoritesSection');
-                favSection.innerHTML = '<h2>My Favorites</h2>';
-                if (!favs.length) {
-                    favSection.innerHTML += '<p>No favorites yet.</p>';
-                } else {
-                    favs.forEach(fav => {
-                        favSection.innerHTML += `
-                        <div class="artisan-profile" style="display:flex;align-items:center;gap:1em;margin-bottom:1em;">
-                            <img src="${fav.profile_pic}" alt="Profile" class="profile-pic" style="width:60px;height:60px;border-radius:50%;object-fit:cover;">
-                            <div style="flex:1;">
-                                <strong>${fav.name}</strong><br>
-                                <span>${fav.skills} | ${fav.location}</span>
-                            </div>
-                        </div>`;
-                    });
-                }
-                favSection.style.display = 'block';
-                window.scrollTo({top: favSection.offsetTop, behavior: 'smooth'});
-            });
-    }
-    if (e.target.id === 'useLocationBtn') {
-        e.preventDefault();
-        if (!navigator.geolocation) {
-            alert('Geolocation is not supported by your browser.');
-            return;
-        }
-        navigator.geolocation.getCurrentPosition(function(position) {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            fetch(`/search?lat=${lat}&lng=${lng}`)
-                .then(response => response.json())
-                .then(data => fetchFavoritesAndRenderArtisans(data));
-        }, function(error) {
-            if (error.code === error.PERMISSION_DENIED) {
-                alert('Location permission denied. Please allow access to use this feature.');
-            } else {
-                alert('Unable to retrieve your location.');
-            }
-        });
-    }
-});
-</script>
+<script src="{{ url_for('static', filename='scripts.js') }}"></script>
 {% endblock %}

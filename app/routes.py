@@ -5,13 +5,14 @@ from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
 from flask import current_app
 from app import db
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, CSRFProtect
 from wtforms import TextAreaField, StringField, PasswordField, FloatField
 from wtforms.validators import DataRequired, Email, Length, ValidationError, Optional
 from app.models import Review
 from email_validator import validate_email, EmailNotValidError
 from app.forms import ContactForm, UploadForm, MessageForm, JobPostForm
 from collections import defaultdict
+from flask_wtf.csrf import validate_csrf, CSRFError
 import logging
 import re
 import os
@@ -306,12 +307,15 @@ def user_dashboard():
         chat_histories[other_id].append(msg)
     participants = {user.id: user for user in User.query.filter(User.id.in_(chat_histories.keys())).all()}
     form = MessageForm()  # <-- Add this line
+    # Add jobs posted by the current user
+    my_jobs = JobPost.query.filter_by(user_id=current_user.id).order_by(JobPost.timestamp.desc()).all()
     return render_template(
         'user_dashboard.html',
         messages=messages,
         chat_histories=chat_histories,
         participants=participants,
-        form=form  # <-- And this
+        form=form,  # <-- And this
+        my_jobs=my_jobs  # Pass to template
     )
 
 @main.route('/artisan_dashboard')
@@ -381,26 +385,42 @@ def upload_profile_pic():
     form = UploadForm()
     if request.method == 'POST' and form.validate_on_submit():
         try:
-            file = request.files['file']
+            file = form.file.data
+
             if file.filename == '':
                 flash('No selected file', 'error')
                 return redirect(url_for('main.upload_profile_pic'))
+
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 base, ext = os.path.splitext(filename)
                 counter = 1
                 new_filename = filename
-                while os.path.exists(os.path.join(current_app.config['UPLOAD_FOLDER'], new_filename)):
+
+                # Define and ensure the upload folder exists
+                upload_path = os.path.join(current_app.root_path, 'static', 'uploads')
+                os.makedirs(upload_path, exist_ok=True)
+
+                # Avoid filename collisions
+                while os.path.exists(os.path.join(upload_path, new_filename)):
                     new_filename = f"{base}_{counter}{ext}"
                     counter += 1
-                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], new_filename))
-                current_user.profile_pic = f"/{current_app.config['UPLOAD_FOLDER']}/{new_filename}"
+
+                # Save the file
+                file_path = os.path.join(upload_path, new_filename)
+                file.save(file_path)
+
+                # Store the web-accessible path
+                current_user.profile_pic = url_for('static', filename=f'uploads/{new_filename}')
                 safe_commit()
                 flash('Profile picture uploaded successfully!', 'success')
+
                 return redirect(url_for('main.user_dashboard' if not current_user.is_artisan else 'main.artisan_dashboard'))
+
         except Exception as e:
             flash(f'Error uploading profile picture: {str(e)}', 'error')
             return redirect(url_for('main.upload_profile_pic'))
+
     return render_template('upload_profile_pic.html', form=form)
 
 @main.route('/api/reviews', methods=['GET'])

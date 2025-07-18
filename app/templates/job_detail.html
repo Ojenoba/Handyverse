@@ -9,7 +9,7 @@
   <hr style="margin:1.5em 0;">
   {% if current_user.is_authenticated and current_user.is_artisan and current_user.id != job.user_id %}
   <form method="POST" action="{{ url_for('main.apply_to_job', job_id=job.id) }}">
-      {{ csrf_token() }}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <textarea name="message" placeholder="Your application message" required></textarea>
       <button type="submit">Apply</button>
   </form>
@@ -18,7 +18,13 @@
     <ul style="list-style:none;padding:0;">
       {% for app in applicants %}
         <li style="margin-bottom:1em;padding:1em;background:#f7fafd;border-radius:8px;">
-          <strong><i class="fa fa-user"></i> {{ app.artisan.user.name }}</strong><br>
+          <strong><i class="fa fa-user"></i>
+            {% if app.artisan and app.artisan.user %}
+              {{ app.artisan.user.name }}
+            {% else %}
+              Unknown Artisan
+            {% endif %}
+          </strong><br>
           <span style="color:#555;">{{ app.message or 'No message' }}</span><br>
           <span style="font-size:0.95em;color:#888;">Status: {{ app.status }}</span>
         </li>

@@ -7,6 +7,9 @@
 <div class="profile-section">
     <div class="profile-pic-preview">
         <img src="{{ current_user.profile_pic or url_for('static', filename='images/handyverse-hero.png') }}" alt="Profile Picture" class="profile-pic" style="width:120px;height:120px;border-radius:50%;object-fit:cover;">
+        <p style="font-size: 0.9rem; color: #888;">
+    Debug path: {{ current_user.profile_pic }}
+</p>
         <form method="POST" enctype="multipart/form-data" action="{{ url_for('main.upload_profile_pic') }}">
             {{ upload_form.hidden_tag() }}
             {{ upload_form.file.label }} {{ upload_form.file() }}

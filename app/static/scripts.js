@@ -8,29 +8,57 @@ document.addEventListener('DOMContentLoaded', () => {
         searchButton.addEventListener('click', function () {
             const location = document.getElementById('locationInput').value;
             fetch(`/search?location=${encodeURIComponent(location)}`)
-                .then(response => response.json())
-                .then(data => {
+                .then(async response => {
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (e) {
+                        data = { error: 'Invalid server response' };
+                    }
                     const grid = document.getElementById('artisansGrid');
-                    grid.innerHTML = data.length ?
-                        data.map(a => `
-                            <div class="artisan-profile">
-                                <img src="${a.profile_pic || '/static/default.png'}" alt="Profile Picture" class="profile-pic">
-                                <h3>${a.name}</h3>
-                                <p><strong>Trade:</strong> ${a.skills}</p>
-                                <p><strong>Location:</strong> ${a.location}</p>
-                                <button onclick="checkLoginAndContact(${a.id})" class="contact-button">Contact</button>
-                            </div>
-                        `).join('') :
-                        '<p>No artisans found in that location.</p>';
+                    if (!response.ok) {
+                        grid.innerHTML = `<div class='error-message'>Error: ${data.error || response.statusText || 'Unknown error'} (status ${response.status})</div>`;
+                        return;
+                    }
+                    console.log('Index search /search response:', data); // DEBUG
+                    grid.innerHTML = renderArtisansGrid(data);
                 })
-                .catch(() => {});
+                .catch((err) => {
+                    const grid = document.getElementById('artisansGrid');
+                    grid.innerHTML = `<div class='error-message'>Network error: ${err.message}</div>`;
+                    console.error('Index search error:', err);
+                });
         });
     }
 
     // Dashboard search
     const searchForm = document.getElementById('searchForm');
     if (searchForm) {
-        searchForm.addEventListener('submit', searchArtisans);
+        searchForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const location = document.getElementById('searchLocation').value;
+            fetch(`/search?location=${encodeURIComponent(location)}`)
+                .then(async response => {
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (e) {
+                        data = { error: 'Invalid server response' };
+                    }
+                    const grid = document.getElementById('artisansGrid');
+                    if (!response.ok) {
+                        grid.innerHTML = `<div class='error-message'>Error: ${data.error || response.statusText || 'Unknown error'} (status ${response.status})</div>`;
+                        return;
+                    }
+                    console.log('Dashboard search /search response:', data); // DEBUG
+                    grid.innerHTML = renderArtisansGrid(data);
+                })
+                .catch((err) => {
+                    const grid = document.getElementById('artisansGrid');
+                    grid.innerHTML = `<div class='error-message'>Network error: ${err.message}</div>`;
+                    console.error('Dashboard search error:', err);
+                });
+        });
     }
 
     // Form validations
@@ -40,6 +68,50 @@ document.addEventListener('DOMContentLoaded', () => {
     if (userSignupForm) userSignupForm.addEventListener('submit', validateUserSignup);
     const artisanSignupForm = document.getElementById('artisanSignupForm');
     if (artisanSignupForm) artisanSignupForm.addEventListener('submit', validateArtisanSignup);
+
+    const useLocationBtn = document.getElementById('useLocationBtn');
+    if (useLocationBtn) {
+        useLocationBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                fetch(`/search?lat=${lat}&lng=${lng}`)
+                    .then(async response => {
+                        let data;
+                        try {
+                            data = await response.json();
+                        } catch (e) {
+                            data = { error: 'Invalid server response' };
+                        }
+                        const grid = document.getElementById('artisansGrid');
+                        if (!response.ok) {
+                            grid.innerHTML = `<div class='error-message'>Error: ${data.error || response.statusText || 'Unknown error'} (status ${response.status})</div>`;
+                            return;
+                        }
+                        console.log('Geolocation /search response:', data); // DEBUG
+                        grid.innerHTML = data.length ?
+                            renderArtisansGrid(data) :
+                            '<p>No artisans found near your location.</p>';
+                    })
+                    .catch((err) => {
+                        const grid = document.getElementById('artisansGrid');
+                        grid.innerHTML = `<div class='error-message'>Network error: ${err.message}</div>`;
+                        console.error('Geolocation search error:', err);
+                    });
+            }, function(error) {
+                if (error.code === error.PERMISSION_DENIED) {
+                    alert('Location permission denied. Please allow access to use this feature.');
+                } else {
+                    alert('Unable to retrieve your location.');
+                }
+            });
+        });
+    }
 });
 
 // Fade-in effect for the whole page
@@ -68,25 +140,20 @@ function displayReviews(reviews) {
     });
 }
 
-function searchArtisans(event) {
-    event.preventDefault();
-    const location = document.getElementById('searchLocation').value;
-    fetch(`/search?location=${encodeURIComponent(location)}`)
-        .then(response => response.json())
-        .then(data => {
-            const resultsDiv = document.getElementById('searchResults');
-            resultsDiv.innerHTML = data.length ?
-                data.map(a => `
-                    <div class="artisan-profile">
-                        <img src="${a.profile_pic || '/static/default.png'}" alt="Profile Picture" class="profile-pic">
-                        <h3>${a.name}</h3>
-                        <p><strong>Trade:</strong> ${a.skills}</p>
-                        <p><strong>Location:</strong> ${a.location}</p>
-                        <button onclick="checkLoginAndContact(${a.id})" class="contact-button">Contact</button>
-                    </div>
-                `).join('') :
-                '<p>No artisans found in that location.</p>';
-        });
+function renderArtisansGrid(data) {
+    if (!data.length) {
+        return '<p>No artisans found in that location.</p>';
+    }
+    return data.map(a => `
+        <div class="artisan-profile">
+            <img src="${a.profile_pic || '/static/default.png'}" alt="Profile Picture" class="profile-pic">
+            <h3>${a.name}</h3>
+            <p><strong>Trade:</strong> ${a.skills}</p>
+            <p><strong>Location:</strong> ${a.location}</p>
+            ${a.distance_km ? `<p><strong>Distance:</strong> ${a.distance_km} km</p>` : ''}
+            <button onclick="checkLoginAndContact(${a.id})" class="contact-button">Contact</button>
+        </div>
+    `).join('');
 }
 
 async function checkLoginAndContact(artisanId) {

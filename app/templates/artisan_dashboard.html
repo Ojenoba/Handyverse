@@ -16,7 +16,17 @@
     </div>
 </div>
 <div class="profile-pic-preview" style="text-align:center;margin-bottom:1em;">
-    <img src="{{ current_user.profile_pic or url_for('static', filename='images/handyverse-hero.png') }}" alt="Profile Picture" class="profile-pic" style="width:90px;height:90px;border-radius:50%;object-fit:cover;">
+    <img
+  src="{{ current_user.profile_pic if current_user.profile_pic else url_for('static', filename='images/handyverse-hero.png') }}"
+  alt="Profile Picture"
+  class="profile-pic"
+  style="width:90px; height:90px; border-radius:50%; object-fit:cover;"
+>
+    {% if current_user.profile_pic %}
+        <p>Current Profile Picture</p>
+    {% else %}
+        <p>No profile picture set. <a href="{{ url_for('main.upload_profile_pic') }}">Upload one now!</a></p>
+    {% endif %}
 </div>
 <p>Welcome, <strong>{{ current_user.name }}</strong>{% if artisan and artisan.skills %} (<em>{{ artisan.skills }}</em>){% endif %}!</p>
 {% endblock %}
