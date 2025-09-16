@@ -8,7 +8,7 @@ class User(db.Model, UserMixin):  # Inherit from UserMixin
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     name = db.Column(db.String(100), nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.String(512))
     location = db.Column(db.String(100))
     phone_number = db.Column(db.String(15))
     is_artisan = db.Column(db.Boolean, default=False)
