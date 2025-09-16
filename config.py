@@ -5,7 +5,7 @@ class Config:
     # Use DATABASE_URL from environment (Render/Heroku), else fallback to local SQLite
     SQLALCHEMY_DATABASE_URI = os.getenv(
         'DATABASE_URL',
-        'sqlite:///instance/handyverse.db'
+        'sqlite:///' + os.path.join(os.path.dirname(__file__), 'instance', 'handyverse.db')
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # Use /tmp/uploads on Render (writable), else local uploads folder
